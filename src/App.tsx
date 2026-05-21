@@ -10,15 +10,22 @@ import Hero from './components/Hero';
 import FeaturedAuthor from './components/FeaturedAuthor';
 import Showcase from './components/Showcase';
 import BookModal from './components/BookModal';
+import CustomCursor from './components/CustomCursor';
 import { DisplayBook } from './types';
 
 export default function App() {
   const [activeBook, setActiveBook] = useState<DisplayBook | null>(null);
   const [isDark, setIsDark] = useState(false);
+  const [isMotionPaused, setIsMotionPaused] = useState(false);
 
   return (
     <div className={`transition-colors duration-500 font-sans min-h-screen relative overflow-hidden ${isDark ? 'text-white selection:bg-knls-orange/30 selection:text-white' : 'text-slate-900 selection:bg-knls-blue/30 selection:text-white'}`}>
       
+      <CustomCursor isDark={isDark} />
+
+      {/* Grain Overlay */}
+      <div className={`fixed inset-0 z-[100] ${isDark ? 'opacity-[0.06]' : 'opacity-[0.08]'} pointer-events-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
+
       {/* Base Background */}
       <div className={`fixed inset-0 pointer-events-none z-[-2] transition-colors duration-500 ${isDark ? 'bg-[#050505]' : 'bg-slate-50'}`} />
       
@@ -35,10 +42,10 @@ export default function App() {
       </div>
 
       <LayoutGroup>
-        <Nav isDark={isDark} toggleTheme={() => setIsDark(!isDark)} />
+        <Nav isDark={isDark} toggleTheme={() => setIsDark(!isDark)} isMotionPaused={isMotionPaused} toggleMotionPause={() => setIsMotionPaused(!isMotionPaused)} />
         <Hero isDark={isDark} />
         <FeaturedAuthor onBookClick={setActiveBook} isDark={isDark} />
-        <Showcase onBookClick={setActiveBook} activeBookId={activeBook?.uniqueId} isDark={isDark} />
+        <Showcase onBookClick={setActiveBook} activeBookId={activeBook?.uniqueId} isDark={isDark} isMotionPaused={isMotionPaused} />
         
         <AnimatePresence>
           {activeBook && (

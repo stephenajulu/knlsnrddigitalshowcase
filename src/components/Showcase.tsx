@@ -3,31 +3,37 @@ import { motion, useAnimationFrame, useMotionValue, animate, useScroll, useTrans
 import { books } from '../data';
 import BookCard from './BookCard';
 import { DisplayBook } from '../types';
+import { Filter } from 'lucide-react';
 
 interface Props {
   onBookClick: (book: DisplayBook) => void;
   activeBookId?: string;
   isDark: boolean;
+  isMotionPaused?: boolean;
 }
 
-export default function Showcase({ onBookClick, activeBookId, isDark }: Props) {
+export default function Showcase({ onBookClick, activeBookId, isDark, isMotionPaused }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollTrackRef = useRef<HTMLDivElement>(null);
+  const [activeGenre, setActiveGenre] = useState<string | null>(null);
 
-  // Create infinite scrolling effect by duplicating books
-  const displayBooks: DisplayBook[] = useMemo(() => [
-    ...books.map(b => ({ ...b, uniqueId: `${b.id}-1` })),
-    ...books.map(b => ({ ...b, uniqueId: `${b.id}-2` })),
-    ...books.map(b => ({ ...b, uniqueId: `${b.id}-3` })),
-    ...books.map(b => ({ ...b, uniqueId: `${b.id}-4` })),
-  ], []);
+  const genres = useMemo(() => ["All", ...Array.from(new Set(books.map(b => b.genre)))], []);
+
+  // Filter books (no longer duplicating for infinite scroll)
+  const displayBooks: DisplayBook[] = useMemo(() => {
+    const filteredSource = activeGenre && activeGenre !== "All" 
+      ? books.filter(b => b.genre === activeGenre)
+      : books;
+    
+    return filteredSource.map(b => ({ ...b, uniqueId: `${b.id}-1` }));
+  }, [activeGenre]);
 
   const x = useMotionValue(0);
   const parallaxX = useMotionValue(0);
   const progressWidth = useMotionValue("0%");
   
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [singleSetWidth, setSingleSetWidth] = useState(0);
+  const [maxScroll, setMaxScroll] = useState(0);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -36,42 +42,42 @@ export default function Showcase({ onBookClick, activeBookId, isDark }: Props) {
   
   const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
 
-  // Is mouse over the entire container? (pause auto-scroll entirely if we are hovering a book or modal is open)
-  const isPaused = hoveredId !== null || activeBookId != null;
+  // Pause if user interacts, modal is open, or motion is paused globally
+  const isPaused = hoveredId !== null || activeBookId != null || isMotionPaused;
 
   useEffect(() => {
     const measure = () => {
-      if (scrollTrackRef.current && scrollTrackRef.current.children.length > books.length) {
+      if (scrollTrackRef.current && scrollTrackRef.current.children.length > 0) {
         const firstBook = scrollTrackRef.current.children[0] as HTMLElement;
-        const identicalBook = scrollTrackRef.current.children[books.length] as HTMLElement;
-        setSingleSetWidth(identicalBook.offsetLeft - firstBook.offsetLeft);
+        const lastBook = scrollTrackRef.current.lastElementChild as HTMLElement;
+        if (firstBook && lastBook) {
+           setMaxScroll(lastBook.offsetLeft - firstBook.offsetLeft);
+        }
+      } else {
+        setMaxScroll(0);
       }
     };
     measure();
-    // Run after a short delay to ensure layout is applied
     setTimeout(measure, 100);
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
-  }, []);
+  }, [activeGenre]);
 
   useAnimationFrame((time, delta) => {
-    if (isPaused || singleSetWidth <= 0) return;
+    if (isPaused || maxScroll <= 0) return;
 
-    const speed = 0.08; // Adjust speed as needed
+    const speed = 0.02; // Slowed down
     let nextX = x.get() - speed * delta;
 
-    // Loop logic for infinite scroll
-    // Once we travel exactly singleSetWidth to the left, we wrap back to 0
-    if (nextX <= -singleSetWidth) {
-      nextX += singleSetWidth;
+    if (nextX < -maxScroll) {
+      nextX = -maxScroll; // Stop at the end
     }
 
     x.set(nextX);
     parallaxX.set(nextX * -0.2);
     
-    // Update progress bar
-    if (singleSetWidth > 0) {
-       const p = Math.abs(nextX) / singleSetWidth;
+    if (maxScroll > 0) {
+       const p = Math.abs(nextX) / maxScroll;
        progressWidth.set(`${p * 100}%`);
     }
   });
@@ -82,25 +88,50 @@ export default function Showcase({ onBookClick, activeBookId, isDark }: Props) {
     
     const child = scrollTrackRef.current.children[index] as HTMLElement;
     if (child) {
-      const childCenter = child.offsetLeft + child.offsetWidth / 2;
-      const screenCenter = window.innerWidth / 2;
-      let targetX = screenCenter - childCenter;
-      
-      // If targetX forces a wrap past bounds, we clamp it or just let it be since it's an infinite track
-      // With 4 sets, we have plenty of room to center any hovered item without running out of bounds
-      // We will just animate it to the centered position!
-      
-      animate(x, targetX, { type: 'spring', stiffness: 60, damping: 20 });
-      animate(parallaxX, targetX * -0.2, { type: 'spring', stiffness: 60, damping: 20 });
-      
-      if (singleSetWidth > 0) {
-        // wrap targetX for progress width between 0 and singleSetWidth
-        let modX = Math.abs(targetX) % singleSetWidth;
-        const p = modX / singleSetWidth;
-        animate(progressWidth, `${p * 100}%`, { duration: 0.3 });
-      }
+      centerChild(child);
     }
   };
+
+  const centerChild = (child: HTMLElement) => {
+    const childCenter = child.offsetLeft + child.offsetWidth / 2;
+    const screenCenter = window.innerWidth / 2;
+    let targetX = screenCenter - childCenter;
+    
+    if (targetX > 0) targetX = 0;
+    if (targetX < -maxScroll) targetX = -maxScroll;
+    
+    animate(x, targetX, { type: 'spring', stiffness: 60, damping: 20 });
+    animate(parallaxX, targetX * -0.2, { type: 'spring', stiffness: 60, damping: 20 });
+    
+    if (maxScroll > 0) {
+      const p = Math.abs(targetX) / maxScroll;
+      animate(progressWidth, `${p * 100}%`, { duration: 0.3 });
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!scrollTrackRef.current) return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        
+        let currentIndex = displayBooks.findIndex(b => b.uniqueId === hoveredId);
+        if (currentIndex === -1) currentIndex = 0; // Default to first if none hovered
+
+        let nextIndex = currentIndex;
+        if (e.key === 'ArrowRight') nextIndex = Math.min(currentIndex + 1, displayBooks.length - 1);
+        if (e.key === 'ArrowLeft') nextIndex = Math.max(currentIndex - 1, 0);
+
+        setHoveredId(displayBooks[nextIndex].uniqueId);
+        const child = scrollTrackRef.current.children[nextIndex] as HTMLElement;
+        if (child) centerChild(child);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hoveredId, displayBooks, maxScroll]);
 
   return (
     <motion.section 
@@ -119,25 +150,54 @@ export default function Showcase({ onBookClick, activeBookId, isDark }: Props) {
          </motion.div>
       </div>
 
+      {/* Filter Bar */}
+      <div className="absolute top-24 md:top-32 left-0 w-full z-20 px-6 md:px-10 flex items-center justify-center">
+         <div className={`flex items-center gap-4 p-2 rounded-full border backdrop-blur-md overflow-x-auto no-scrollbar max-w-full ${isDark ? 'border-white/10 bg-white/5' : 'border-black/5 bg-white/50'}`}>
+            <div className={`pl-2 pr-2 text-xs opacity-50 flex items-center gap-1 ${isDark ? 'text-white' : 'text-black'}`}>
+              <Filter size={12} /> <span className="uppercase font-bold tracking-widest hidden md:block">Filter</span>
+            </div>
+            {genres.map(g => (
+              <button 
+                key={g} 
+                onClick={() => setActiveGenre(g)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
+                  (activeGenre === g || (g === 'All' && !activeGenre)) 
+                    ? (isDark ? 'bg-white text-black' : 'bg-knls-blue text-white') 
+                    : (isDark ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-black/60 hover:text-black hover:bg-black/5')
+                }`}
+              >
+                {g}
+              </button>
+            ))}
+         </div>
+      </div>
+
       {/* The 3D Perspective container */}
-      <div className="bay-window-container w-full h-full perspective-[2000px] z-10 flex border-y border-transparent items-center py-20">
+      <div className="bay-window-container w-full h-full perspective-[2000px] z-10 flex border-y border-transparent items-center py-20 cursor-grab active:cursor-grabbing">
         <motion.div 
            ref={scrollTrackRef}
            style={{ x }} 
+           drag="x"
+           dragConstraints={{ left: -maxScroll, right: 0 }}
+           onDragStart={() => setHoveredId("drag")} // pause auto scroll
+           onDragEnd={() => setHoveredId(null)}
+           dragElastic={0.1}
+           dragTransition={{ bounceStiffness: 100, bounceDamping: 20 }}
            className="flex items-center gap-10 md:gap-20 h-full w-max px-[50vw]"
         >
           {displayBooks.map((book, index) => (
-            <BookCard 
-              key={book.uniqueId} 
-              book={book} 
-              isHovered={hoveredId === book.uniqueId}
-              isOthersHovered={hoveredId !== null && hoveredId !== book.uniqueId}
-              onHover={() => handleHoverStart(book.uniqueId, index)}
-              onLeave={() => setHoveredId(null)}
-              onClick={() => onBookClick(book)}
-              isActive={activeBookId === book.uniqueId}
-              isDark={isDark}
-            />
+            <div data-cursor="view" key={book.uniqueId}>
+              <BookCard 
+                book={book} 
+                isHovered={hoveredId === book.uniqueId}
+                isOthersHovered={hoveredId !== null && hoveredId !== book.uniqueId && hoveredId !== "drag"}
+                onHover={() => handleHoverStart(book.uniqueId, index)}
+                onLeave={() => setHoveredId(null)}
+                onClick={() => onBookClick(book)}
+                isActive={activeBookId === book.uniqueId}
+                isDark={isDark}
+              />
+            </div>
           ))}
         </motion.div>
       </div>

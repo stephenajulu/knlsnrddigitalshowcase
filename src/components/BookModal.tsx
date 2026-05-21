@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { DisplayBook } from '../types';
-import { X, Volume2, Square, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Volume2, Square, ChevronDown, ChevronUp, Share2 } from 'lucide-react';
 
 interface Props {
   book: DisplayBook;
@@ -40,6 +40,18 @@ export default function BookModal({ book, onClose, isDark }: Props) {
       setSpeechSynthesisInstance(msg);
       window.speechSynthesis.speak(msg);
       setIsPlayingAudio(true);
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: book.title,
+        text: `Check out ${book.title} by ${book.author}`,
+        url: window.location.href,
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(window.location.href);
     }
   };
 
@@ -148,6 +160,13 @@ export default function BookModal({ book, onClose, isDark }: Props) {
              >
                {isPlayingAudio ? <Square size={14} className={isDark ? "fill-black" : "fill-white"} /> : <Volume2 size={14} />}
                {isPlayingAudio ? 'Stop Narration' : 'Play Synopsis'}
+               {isPlayingAudio && (
+                 <div className="flex gap-1 ml-1 items-end h-[10px]">
+                   <motion.div animate={{ height: ["40%", "100%", "40%"] }} transition={{ repeat: Infinity, duration: 0.5, ease: "easeInOut" }} className={`w-0.5 rounded-full ${isDark ? 'bg-black' : 'bg-white'}`} />
+                   <motion.div animate={{ height: ["100%", "30%", "100%"] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut" }} className={`w-0.5 rounded-full ${isDark ? 'bg-black' : 'bg-white'}`} />
+                   <motion.div animate={{ height: ["50%", "100%", "50%"] }} transition={{ repeat: Infinity, duration: 0.4, ease: "easeInOut" }} className={`w-0.5 rounded-full ${isDark ? 'bg-black' : 'bg-white'}`} />
+                 </div>
+               )}
              </button>
            </motion.div>
 
@@ -174,6 +193,9 @@ export default function BookModal({ book, onClose, isDark }: Props) {
              </button>
              <button className={`w-full sm:w-auto px-8 py-4 border text-xs font-bold uppercase tracking-[0.2em] transition-colors rounded ${isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-knls-blue/20 text-knls-blue hover:bg-knls-blue/10'}`}>
                KNLS Digital Catalog
+             </button>
+             <button onClick={handleShare} className={`w-full sm:w-auto p-4 border flex items-center justify-center transition-colors rounded ${isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-knls-blue/20 text-knls-blue hover:bg-knls-blue/10'}`} title="Share Book">
+               <Share2 size={16} />
              </button>
            </motion.div>
         </motion.div>

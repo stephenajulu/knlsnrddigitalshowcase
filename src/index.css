@@ -52,3 +52,9 @@ body {
     scrollbar-width: none;
   }
 }
+
+@media (pointer: fine) {
+  body, button, a {
+    cursor: none !important;
+  }
+}

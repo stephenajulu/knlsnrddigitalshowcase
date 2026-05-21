@@ -7,6 +7,7 @@ export interface Book {
   monthShort: string;
   description: string;
   coverGradient: string;
+  genre: string;
 }
 
 export interface DisplayBook extends Book {
