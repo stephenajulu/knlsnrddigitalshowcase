@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-knls-blue: #2d2c8e;
+  --color-knls-orange: #f48312;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+body {
+  margin: 0;
+  overscroll-behavior: none;
+  background-color: #f8fafc;
+  color: #020617;
+}
+
+/* Hide scrollbar for cleaner immersive experience */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+
+/* Custom Utilities for frosted glass and layout */
+@layer utilities {
+  .glass-nav {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .hero-bg {
+    background: radial-gradient(circle at 50% 150%, #1a1a2e 0%, #050505 70%);
+  }
+
+  .bay-window-container {
+    perspective: 2000px;
+  }
+  
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+
+  .writing-vertical {
+    writing-mode: vertical-rl;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
