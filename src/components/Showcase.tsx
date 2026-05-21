@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
-import { motion, useAnimationFrame, useMotionValue, animate } from 'motion/react';
+import { motion, useAnimationFrame, useMotionValue, animate, useScroll, useTransform } from 'motion/react';
 import { books } from '../data';
 import BookCard from './BookCard';
 import { DisplayBook } from '../types';
@@ -28,6 +28,13 @@ export default function Showcase({ onBookClick, activeBookId, isDark }: Props) {
   
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [singleSetWidth, setSingleSetWidth] = useState(0);
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"]
+  });
+  
+  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
 
   // Is mouse over the entire container? (pause auto-scroll entirely if we are hovering a book or modal is open)
   const isPaused = hoveredId !== null || activeBookId != null;
@@ -96,9 +103,10 @@ export default function Showcase({ onBookClick, activeBookId, isDark }: Props) {
   };
 
   return (
-    <section 
+    <motion.section 
       id="showcase" 
       ref={containerRef} 
+      style={{ opacity }}
       className="relative min-h-screen flex flex-col justify-center overflow-hidden z-10"
     >
       {/* Background CHRONICLES Text - huge watermark */}
@@ -148,6 +156,6 @@ export default function Showcase({ onBookClick, activeBookId, isDark }: Props) {
         </div>
         <span>END</span>
       </div>
-    </section>
+    </motion.section>
   )
 }
