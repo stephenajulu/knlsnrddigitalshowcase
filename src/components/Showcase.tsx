@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
-import { motion, useAnimationFrame, useMotionValue, animate, useScroll, useTransform } from 'motion/react';
+import { motion, useAnimationFrame, useMotionValue, animate, useScroll, useTransform, AnimatePresence } from 'motion/react';
 import { books } from '../data';
 import BookCard from './BookCard';
 import { DisplayBook } from '../types';
@@ -10,9 +10,10 @@ interface Props {
   activeBookId?: string;
   isDark: boolean;
   isMotionPaused?: boolean;
+  isCinematicMode?: boolean;
 }
 
-export default function Showcase({ onBookClick, activeBookId, isDark, isMotionPaused }: Props) {
+export default function Showcase({ onBookClick, activeBookId, isDark, isMotionPaused, isCinematicMode }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollTrackRef = useRef<HTMLDivElement>(null);
   const [activeGenre, setActiveGenre] = useState<string | null>(null);
@@ -150,27 +151,33 @@ export default function Showcase({ onBookClick, activeBookId, isDark, isMotionPa
          </motion.div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="absolute top-24 md:top-32 left-0 w-full z-20 px-6 md:px-10 flex items-center justify-center">
-         <div className={`flex items-center gap-4 p-2 rounded-full border backdrop-blur-md overflow-x-auto no-scrollbar max-w-full ${isDark ? 'border-white/10 bg-white/5' : 'border-black/5 bg-white/50'}`}>
-            <div className={`pl-2 pr-2 text-xs opacity-50 flex items-center gap-1 ${isDark ? 'text-white' : 'text-black'}`}>
-              <Filter size={12} /> <span className="uppercase font-bold tracking-widest hidden md:block">Filter</span>
-            </div>
-            {genres.map(g => (
-              <button 
-                key={g} 
-                onClick={() => setActiveGenre(g)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
-                  (activeGenre === g || (g === 'All' && !activeGenre)) 
-                    ? (isDark ? 'bg-white text-black' : 'bg-knls-blue text-white') 
-                    : (isDark ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-black/60 hover:text-black hover:bg-black/5')
-                }`}
-              >
-                {g}
-              </button>
-            ))}
-         </div>
-      </div>
+      <AnimatePresence>
+        {!isCinematicMode && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+            className="absolute top-24 md:top-32 left-0 w-full z-20 px-6 md:px-10 flex items-center justify-center"
+          >
+             <div className={`flex items-center gap-4 p-2 rounded-full border backdrop-blur-md overflow-x-auto no-scrollbar max-w-full ${isDark ? 'border-white/10 bg-white/5' : 'border-black/5 bg-white/50'}`}>
+                <div className={`pl-2 pr-2 text-xs opacity-50 flex items-center gap-1 ${isDark ? 'text-white' : 'text-black'}`}>
+                  <Filter size={12} /> <span className="uppercase font-bold tracking-widest hidden md:block">Filter</span>
+                </div>
+                {genres.map(g => (
+                  <button 
+                    key={g} 
+                    onClick={() => setActiveGenre(g)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
+                      (activeGenre === g || (g === 'All' && !activeGenre)) 
+                        ? (isDark ? 'bg-white text-black' : 'bg-knls-blue text-white') 
+                        : (isDark ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-black/60 hover:text-black hover:bg-black/5')
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* The 3D Perspective container */}
       <div className="bay-window-container w-full h-full perspective-[2000px] z-10 flex border-y border-transparent items-center py-20 cursor-grab active:cursor-grabbing">
@@ -203,19 +210,27 @@ export default function Showcase({ onBookClick, activeBookId, isDark, isMotionPa
       </div>
       
       {/* Progress Bar & Indicators pinned to bottom */}
-      <div className={`absolute bottom-8 left-6 md:left-10 text-[8px] md:text-[10px] tracking-[0.3em] uppercase z-10 ${isDark ? 'text-zinc-600' : 'text-slate-400'}`}>
-        Chronological Archive Timeline
-      </div>
-      <div className={`absolute bottom-8 right-6 md:right-10 flex items-center gap-4 text-[10px] tracking-[0.2em] uppercase font-bold z-10 ${isDark ? 'text-zinc-400' : 'text-slate-500'}`}>
-        <span>START</span>
-        <div className={`w-16 h-[1px] relative ${isDark ? 'bg-zinc-800' : 'bg-slate-300'}`}>
-           <motion.div 
-             className={`absolute top-0 left-0 h-full ${isDark ? 'bg-knls-orange' : 'bg-knls-orange'}`} 
-             style={{ width: progressWidth }}
-           />
-        </div>
-        <span>END</span>
-      </div>
+      <AnimatePresence>
+        {!isCinematicMode && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+          >
+            <div className={`absolute bottom-8 left-6 md:left-10 text-[8px] md:text-[10px] tracking-[0.3em] uppercase z-10 ${isDark ? 'text-zinc-600' : 'text-slate-400'}`}>
+              Chronological Archive Timeline
+            </div>
+            <div className={`absolute bottom-8 right-6 md:right-10 flex items-center gap-4 text-[10px] tracking-[0.2em] uppercase font-bold z-10 ${isDark ? 'text-zinc-400' : 'text-slate-500'}`}>
+              <span>START</span>
+              <div className={`w-16 h-[1px] relative ${isDark ? 'bg-zinc-800' : 'bg-slate-300'}`}>
+                 <motion.div 
+                   className={`absolute top-0 left-0 h-full ${isDark ? 'bg-knls-orange' : 'bg-knls-orange'}`} 
+                   style={{ width: progressWidth }}
+                 />
+              </div>
+              <span>END</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.section>
   )
 }

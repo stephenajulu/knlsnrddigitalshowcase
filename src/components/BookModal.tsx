@@ -1,7 +1,8 @@
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { DisplayBook } from '../types';
-import { X, Volume2, Square, ChevronDown, ChevronUp, Share2 } from 'lucide-react';
+import { X, Volume2, Square, ChevronDown, ChevronUp, Share2, BookOpen } from 'lucide-react';
+import ExcerptReader from './ExcerptReader';
 
 interface Props {
   book: DisplayBook;
@@ -13,14 +14,16 @@ export default function BookModal({ book, onClose, isDark }: Props) {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [speechSynthesisInstance, setSpeechSynthesisInstance] = useState<SpeechSynthesisUtterance | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isAuthorHovered, setIsAuthorHovered] = useState(false);
+  const [isExcerptOpen, setIsExcerptOpen] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape' && !isExcerptOpen) onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, isExcerptOpen]);
 
   useEffect(() => {
     // Cleanup speech when modal closes
@@ -72,6 +75,7 @@ export default function BookModal({ book, onClose, isDark }: Props) {
   };
 
   return (
+    <>
     <motion.div 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
@@ -141,8 +145,36 @@ export default function BookModal({ book, onClose, isDark }: Props) {
              {book.title}
            </motion.h1>
            
-           <motion.div variants={itemVariants} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
-             <p className={`text-base md:text-xl font-serif italic ${isDark ? 'text-knls-orange' : 'text-knls-orange'}`}>By {book.author}</p>
+           <motion.div variants={itemVariants} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4 relative z-20">
+             <div 
+               className="relative group cursor-help"
+               onMouseEnter={() => setIsAuthorHovered(true)}
+               onMouseLeave={() => setIsAuthorHovered(false)}
+             >
+               <p className={`text-base md:text-xl font-serif italic border-b border-dashed border-knls-orange/40 ${isDark ? 'text-knls-orange' : 'text-knls-orange'}`}>By {book.author}</p>
+               
+               <AnimatePresence>
+                 {isAuthorHovered && (
+                   <motion.div 
+                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                     animate={{ opacity: 1, y: 0, scale: 1 }}
+                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                     className={`absolute top-full left-0 mt-4 w-72 p-5 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.2)] border ${isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-slate-200'} z-50`}
+                   >
+                     <div className="flex items-center gap-4 mb-3">
+                       <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${book.authorAvatar || 'from-gray-500 to-gray-800'}`} />
+                       <div>
+                         <h4 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{book.author}</h4>
+                         <p className={`text-[10px] uppercase font-bold tracking-widest ${isDark ? 'text-zinc-500' : 'text-slate-400'}`}>Featured Author</p>
+                       </div>
+                     </div>
+                     <p className={`text-xs font-serif leading-relaxed ${isDark ? 'text-zinc-400' : 'text-slate-600'}`}>
+                       {book.authorBio || book.authorTagline}
+                     </p>
+                   </motion.div>
+                 )}
+               </AnimatePresence>
+             </div>
              <span className={`hidden md:block w-1.5 h-1.5 rounded-full ${isDark ? 'bg-zinc-600' : 'bg-slate-300'}`}></span>
              <p className={`text-xs md:text-sm tracking-widest uppercase font-bold ${isDark ? 'text-zinc-400' : 'text-slate-500'}`}>
                 Received: {book.month} 2026
@@ -187,19 +219,28 @@ export default function BookModal({ book, onClose, isDark }: Props) {
              )}
            </motion.div>
 
-           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center gap-4 md:gap-6">
+           <motion.div variants={itemVariants} className="flex flex-wrap sm:flex-nowrap items-center gap-4 md:gap-6">
              <button className={`w-full sm:w-auto px-8 py-4 text-xs font-bold uppercase tracking-[0.2em] transition-colors rounded shadow-lg ${isDark ? 'bg-white text-black hover:bg-zinc-200 shadow-white/10' : 'bg-knls-blue text-white hover:bg-knls-blue/90 shadow-knls-blue/20'}`}>
                Read on Vtabu
              </button>
-             <button className={`w-full sm:w-auto px-8 py-4 border text-xs font-bold uppercase tracking-[0.2em] transition-colors rounded ${isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-knls-blue/20 text-knls-blue hover:bg-knls-blue/10'}`}>
-               KNLS Digital Catalog
-             </button>
-             <button onClick={handleShare} className={`w-full sm:w-auto p-4 border flex items-center justify-center transition-colors rounded ${isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-knls-blue/20 text-knls-blue hover:bg-knls-blue/10'}`} title="Share Book">
+             {book.excerpt && (
+                <button onClick={() => setIsExcerptOpen(true)} className={`w-full sm:w-auto px-6 py-4 border flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.2em] transition-colors rounded ${isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-knls-blue/20 text-knls-blue hover:bg-knls-blue/10'}`}>
+                  <BookOpen size={16} /> Excerpt
+                </button>
+             )}
+             <button onClick={handleShare} className={`p-4 border flex items-center justify-center transition-colors rounded ${isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-knls-blue/20 text-knls-blue hover:bg-knls-blue/10'}`} title="Share Book">
                <Share2 size={16} />
              </button>
            </motion.div>
         </motion.div>
       </div>
     </motion.div>
+
+    <AnimatePresence>
+      {isExcerptOpen && book.excerpt && (
+        <ExcerptReader excerpt={book.excerpt} title={book.title} onClose={() => setIsExcerptOpen(false)} isDark={isDark} />
+      )}
+    </AnimatePresence>
+    </>
   )
 }
