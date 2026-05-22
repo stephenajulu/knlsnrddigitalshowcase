@@ -9,15 +9,69 @@ interface Props {
   isDark: boolean;
 }
 
+let sharedAudioCtx: AudioContext | null = null;
+
+const playFlipSound = () => {
+  try {
+    if (!sharedAudioCtx) {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      sharedAudioCtx = new AudioContextClass();
+    }
+    
+    // Resume context if suspended
+    if (sharedAudioCtx.state === 'suspended') {
+      sharedAudioCtx.resume();
+    }
+    
+    const ctx = sharedAudioCtx;
+    const bufferSize = ctx.sampleRate * 0.10;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = (Math.random() * 2 - 1) * Math.pow(1 - (i / bufferSize), 2);
+    }
+    
+    const noiseSrc = ctx.createBufferSource();
+    noiseSrc.buffer = noiseBuffer;
+    
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(3000, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
+    
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    
+    noiseSrc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    
+    noiseSrc.start();
+  } catch (e) {}
+};
+
 export default function ExcerptReader({ excerpt, title, onClose, isDark }: Props) {
   const [currentPage, setCurrentPage] = useState(0);
+  const [direction, setDirection] = useState(1);
 
   const nextPage = () => {
-    if (currentPage < excerpt.length - 1) setCurrentPage(prev => prev + 1);
+    if (currentPage < excerpt.length - 1) {
+      if (navigator.vibrate) navigator.vibrate(50);
+      playFlipSound();
+      setDirection(1);
+      setCurrentPage(prev => prev + 1);
+    }
   };
 
   const prevPage = () => {
-    if (currentPage > 0) setCurrentPage(prev => prev - 1);
+    if (currentPage > 0) {
+      if (navigator.vibrate) navigator.vibrate(50);
+      playFlipSound();
+      setDirection(-1);
+      setCurrentPage(prev => prev - 1);
+    }
   };
 
   return (
@@ -55,13 +109,33 @@ export default function ExcerptReader({ excerpt, title, onClose, isDark }: Props
            </div>
 
            {/* Right Page (Active) */}
-           <AnimatePresence mode="wait">
+           <AnimatePresence mode="wait" custom={direction}>
              <motion.div 
                key={currentPage}
-               initial={{ rotateY: 90, opacity: 0, transformOrigin: "left" }}
-               animate={{ rotateY: 0, opacity: 1 }}
-               exit={{ rotateY: -90, opacity: 0 }}
-               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+               custom={direction}
+               initial={(dir: number) => ({
+                 rotateY: dir === 1 ? 90 : -90, 
+                 rotateX: dir === 1 ? 10 : -10,
+                 z: 200,
+                 opacity: 0, 
+                 transformOrigin: "left center",
+                 filter: "brightness(1.5) drop-shadow(-20px 0px 20px rgba(0,0,0,0.2))"
+               })}
+               animate={{ 
+                 rotateY: 0, 
+                 rotateX: 0,
+                 z: 0,
+                 opacity: 1, 
+                 filter: "brightness(1) drop-shadow(0px 0px 0px rgba(0,0,0,0))"
+               }}
+               exit={(dir: number) => ({ 
+                 rotateY: dir === 1 ? -120 : 120, 
+                 rotateX: dir === 1 ? -15 : 15,
+                 z: 200,
+                 opacity: 0,
+                 filter: "brightness(0.5) drop-shadow(20px 0px 20px rgba(0,0,0,0.4))"
+               })}
+               transition={{ duration: 0.8, ease: [0.4, 0.0, 0.2, 1] }}
                className={`w-full md:w-1/2 h-full p-8 md:p-12 flex flex-col justify-between z-10 pointer-events-auto ${isDark ? 'bg-[#1a1814] text-zinc-300' : 'bg-[#f4f1ea] text-slate-800'}`}
                style={{ transformStyle: 'preserve-3d' }}
                drag="x"

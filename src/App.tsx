@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
+import { books } from './data';
 import Nav from './components/Nav';
 import Hero from './components/Hero';
 import FeaturedAuthor from './components/FeaturedAuthor';
@@ -12,17 +13,18 @@ import Showcase from './components/Showcase';
 import BookModal from './components/BookModal';
 import CustomCursor from './components/CustomCursor';
 import CommandPalette from './components/CommandPalette';
-import AudioPlayer from './components/AudioPlayer';
 import { DisplayBook } from './types';
 import { Expand } from 'lucide-react';
 
 export default function App() {
+  const systemReducedMotion = useReducedMotion();
   const [activeBook, setActiveBook] = useState<DisplayBook | null>(null);
   const [isDark, setIsDark] = useState(false);
-  const [isMotionPaused, setIsMotionPaused] = useState(false);
+  const [userMotionPaused, setUserMotionPaused] = useState<boolean | null>(null);
   const [isCinematicMode, setIsCinematicMode] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+
+  const isMotionPaused = userMotionPaused ?? systemReducedMotion ?? false;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,7 +46,6 @@ export default function App() {
     <div className={`transition-colors duration-500 font-sans min-h-screen relative overflow-hidden ${isDark ? 'text-white selection:bg-knls-orange/30 selection:text-white' : 'text-slate-900 selection:bg-knls-blue/30 selection:text-white'}`}>
       
       <CustomCursor isDark={isDark} />
-      <AudioPlayer isPlaying={isAudioPlaying} />
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} onSelect={setActiveBook} isDark={isDark} />
 
       {/* Cinematic Mode Exit Hint overlay */}
@@ -85,11 +86,9 @@ export default function App() {
           isDark={isDark} 
           toggleTheme={() => setIsDark(!isDark)} 
           isMotionPaused={isMotionPaused} 
-          toggleMotionPause={() => setIsMotionPaused(!isMotionPaused)}
+          toggleMotionPause={() => setUserMotionPaused(isMotionPaused ? false : true)}
           isCinematicMode={isCinematicMode}
           toggleCinematicMode={() => setIsCinematicMode(!isCinematicMode)}
-          isAudioPlaying={isAudioPlaying}
-          toggleAudio={() => setIsAudioPlaying(!isAudioPlaying)}
           openCommandPalette={() => setIsCommandPaletteOpen(true)}
         />
         <Hero isDark={isDark} />

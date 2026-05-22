@@ -1,6 +1,12 @@
 import { Book } from './types';
 
-export const books: Book[] = [
+// ============================================================================
+// CONFIGURATION
+// Toggle this flag to false when the app is approved and ready for real data.
+// ============================================================================
+export const USE_MOCK_DATA = true;
+
+const mockBooks: Book[] = [
   { 
     id: "b1", 
     title: "The Savannah Echo", 
@@ -129,10 +135,45 @@ export const books: Book[] = [
   }
 ];
 
+// ============================================================================
+// REAL DATA (Legal Deposits)
+// Populate this array with the real legal deposit data once ready,
+// including real coverImage URLs, excerpts, and author details.
+// ============================================================================
+const realBooks: Book[] = [
+  // Example placeholder for real data:
+  // {
+  //   id: "real-1",
+  //   title: "Real Legal Deposit Title",
+  //   author: "Real Author",
+  //   authorTagline: "Real Tagline",
+  //   authorBio: "Real Bio",
+  //   authorAvatar: "from-blue-600 to-blue-900",
+  //   month: "AUGUST",
+  //   monthShort: "Aug",
+  //   description: "Real description",
+  //   coverGradient: "from-gray-900 to-black",
+  //   coverImage: "https://example.com/real-cover.jpg",
+  //   genre: "Fiction",
+  //   excerpt: ["Real excerpt page 1", "Real excerpt page 2"]
+  // }
+];
+
+export const books: Book[] = USE_MOCK_DATA ? mockBooks : realBooks;
+
 export const featuredAuthor = {
-  name: "Dr. Ken Korir",
-  bio: "Dr. Ken Korir is a foremost thinker in East Africa's digital transformation. With a background in computer science and public policy, he has advised multiple governments on building sustainable tech infrastructure for the future. His writing bridges the gap between complex technological theory and practical socio-economic realities.",
-  quote: "The future of our nation is written in code, but rooted deeply in our traditions and shared stories.",
-  bookIds: ["b3"]
+  name: USE_MOCK_DATA ? "Dr. Ken Korir" : "Real Featured Author",
+  bio: USE_MOCK_DATA ? "Dr. Ken Korir is a foremost thinker in East Africa's digital transformation. With a background in computer science and public policy, he has advised multiple governments on building sustainable tech infrastructure for the future. His writing bridges the gap between complex technological theory and practical socio-economic realities." : "Real Bio",
+  quote: USE_MOCK_DATA ? "The future of our nation is written in code, but rooted deeply in our traditions and shared stories." : "Real Quote",
+  bookIds: USE_MOCK_DATA ? ["b3"] : ["real-1"]
+};
+
+export const heroContent = {
+  badge: USE_MOCK_DATA ? "National Reading Day 2026" : "National Reading Day 2026",
+  titleLine1: USE_MOCK_DATA ? "Our Stories, Our Future:" : "Our Stories, Our Future:",
+  titleLine2: USE_MOCK_DATA ? "Empowering Minds Through Reading" : "Empowering Minds Through Reading",
+  description: USE_MOCK_DATA 
+    ? "A curated digital archive of Kenya's preserved literary heritage. Explore the newest works received through legal deposit during the first seven months of 2026. Scroll down to enter the chronological timeline." 
+    : "Actual description text for the live display goes here."
 };
 

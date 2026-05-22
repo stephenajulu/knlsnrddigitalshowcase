@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { DisplayBook } from '../types';
-import { X, Volume2, Square, ChevronDown, ChevronUp, Share2, BookOpen } from 'lucide-react';
+import { X, Volume2, Square, ChevronDown, ChevronUp, Share2, BookOpen, Twitter, MessageCircle } from 'lucide-react';
 import ExcerptReader from './ExcerptReader';
 
 interface Props {
@@ -65,13 +65,27 @@ export default function BookModal({ book, onClose, isDark }: Props) {
 
   // Stagger animation container
   const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.3 } }
+    hidden: { 
+      opacity: 0,
+      rotateY: -90,
+      transformOrigin: "left center",
+      transformPerspective: 2000
+    },
+    visible: { 
+      opacity: 1,
+      rotateY: 0,
+      transition: { 
+        duration: 1.2, 
+        ease: [0.22, 1, 0.36, 1],
+        staggerChildren: 0.1, 
+        delayChildren: 0.4 
+      } 
+    }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+    hidden: { opacity: 0, y: 20, rotateX: 20 },
+    visible: { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.6, ease: "easeOut" } }
   };
 
   return (
@@ -108,8 +122,12 @@ export default function BookModal({ book, onClose, isDark }: Props) {
            >
              <motion.div 
                 layoutId={`book-cover-${book.uniqueId}`}
-                className={`absolute inset-0 bg-gradient-to-br ${book.coverGradient}`}
-             />
+                className={`absolute inset-0 bg-gradient-to-br ${book.coverGradient} overflow-hidden`}
+             >
+                {book.coverImage && (
+                  <img src={book.coverImage} alt={book.title} className="absolute inset-0 w-full h-full object-cover" />
+                )}
+             </motion.div>
              
              <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: 0.2, duration: 0.3 }}
@@ -138,7 +156,8 @@ export default function BookModal({ book, onClose, isDark }: Props) {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          exit={{ opacity: 0, x: 20, filter: 'blur(8px)' }}
+          exit={{ opacity: 0, rotateY: -60, transformPerspective: 2000, transformOrigin: 'left center', transition: { duration: 0.6, ease: [0.6, 0.05, -0.01, 0.9] } }}
+          style={{ transformStyle: 'preserve-3d' }}
           className="w-full md:w-1/2 flex flex-col justify-center text-left"
         >
            <motion.h1 variants={itemVariants} className={`text-4xl md:text-6xl font-bold uppercase tracking-tighter mb-4 line-clamp-2 md:line-clamp-none leading-none ${isDark ? 'text-white' : 'text-knls-blue'}`}>
@@ -228,9 +247,17 @@ export default function BookModal({ book, onClose, isDark }: Props) {
                   <BookOpen size={16} /> Excerpt
                 </button>
              )}
-             <button onClick={handleShare} className={`p-4 border flex items-center justify-center transition-colors rounded ${isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-knls-blue/20 text-knls-blue hover:bg-knls-blue/10'}`} title="Share Book">
-               <Share2 size={16} />
-             </button>
+             <div className="flex items-center gap-2">
+               <button onClick={() => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ${book.title} by ${book.author} ` + window.location.href)}`, '_blank')} className={`p-4 border flex items-center justify-center transition-colors rounded ${isDark ? 'border-white/20 text-white hover:bg-white/10 hover:text-green-400 hover:border-green-500/50' : 'border-knls-blue/20 text-knls-blue hover:bg-green-50 hover:text-green-600 hover:border-green-600/30'}`} title="Share on WhatsApp">
+                 <MessageCircle size={16} />
+               </button>
+               <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${book.title} by ${book.author}`)}&url=${encodeURIComponent(window.location.href)}`, '_blank')} className={`p-4 border flex items-center justify-center transition-colors rounded ${isDark ? 'border-white/20 text-white hover:bg-white/10 hover:text-blue-400 hover:border-blue-500/50' : 'border-knls-blue/20 text-knls-blue hover:bg-blue-50 hover:text-blue-500 hover:border-blue-600/30'}`} title="Share on X">
+                 <Twitter size={16} />
+               </button>
+               <button onClick={handleShare} className={`p-4 border flex items-center justify-center transition-colors rounded ${isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-knls-blue/20 text-knls-blue hover:bg-knls-blue/10'}`} title="Other Share Options">
+                 <Share2 size={16} />
+               </button>
+             </div>
            </motion.div>
         </motion.div>
       </div>

@@ -1,4 +1,4 @@
-import { Moon, Sun, Pause, Play, Expand, Volume2, VolumeX, Search } from 'lucide-react';
+import { Moon, Sun, Pause, Play, Expand, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Props {
@@ -8,12 +8,10 @@ interface Props {
   toggleMotionPause: () => void;
   isCinematicMode: boolean;
   toggleCinematicMode: () => void;
-  isAudioPlaying: boolean;
-  toggleAudio: () => void;
   openCommandPalette: () => void;
 }
 
-export default function Nav({ isDark, toggleTheme, isMotionPaused, toggleMotionPause, isCinematicMode, toggleCinematicMode, isAudioPlaying, toggleAudio, openCommandPalette }: Props) {
+export default function Nav({ isDark, toggleTheme, isMotionPaused, toggleMotionPause, isCinematicMode, toggleCinematicMode, openCommandPalette }: Props) {
   return (
     <AnimatePresence>
       {!isCinematicMode && (
@@ -24,16 +22,42 @@ export default function Nav({ isDark, toggleTheme, isMotionPaused, toggleMotionP
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className={`fixed top-0 w-full h-16 flex items-center justify-between px-6 md:px-10 z-50 transition-colors duration-200 ${isDark ? 'glass-nav text-white border-white/10' : 'bg-white/70 backdrop-blur-md text-knls-blue border-b border-black/5 shadow-sm'}`}
         >
-          <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-sm flex items-center justify-center font-bold text-xs ${isDark ? 'bg-white text-black' : 'bg-knls-orange text-white'}`}>
-              knls
+          <div className={`flex items-center transition-colors duration-300 ${isDark ? 'bg-white/95 px-3 py-1 rounded-lg shadow-sm' : ''}`}>
+            <img 
+              src="https://knls.ac.ke/wp-content/uploads/2021/04/KNLS-logo.png" 
+              alt="KNLS Logo" 
+              className="h-8 md:h-10 object-contain"
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                target.style.display = 'none';
+                if (target.nextElementSibling) {
+                  target.nextElementSibling.classList.remove('hidden');
+                  target.nextElementSibling.classList.add('flex');
+                }
+              }}
+            />
+            <div className="fallback-logo hidden items-center h-8 md:h-10">
+              <div className="flex flex-col justify-center h-full mr-2 md:mr-3">
+                <div className="flex items-baseline font-bold text-[#35338A] leading-none tracking-tighter">
+                  <span className="text-xl md:text-2xl">k</span>
+                  <span className="text-xl md:text-2xl uppercase">n</span>
+                  <span className="text-xl md:text-2xl uppercase">l</span>
+                  <span className="text-xl md:text-2xl">s</span>
+                </div>
+                <div className="w-full bg-[#EA7B25] h-[6px] md:h-[8px] rounded-b-[50%] mt-[-1px]" />
+                <div className="text-[4px] md:text-[5px] uppercase font-bold tracking-wider text-[#35338A] mt-1 text-center shrink-0">
+                  Read. Know. Empower
+                </div>
+              </div>
+              <div className="w-[2px] h-[24px] md:h-[30px] bg-[#EA7B25] mx-1 md:mx-2 hidden sm:block"></div>
+              <div className="flex-col text-[#35338A] font-semibold hidden sm:flex leading-none justify-center">
+                <span className="text-[12px] md:text-[14px] tracking-tight">kenya national</span>
+                <span className="text-[12px] md:text-[14px] tracking-tight mt-[2px]">library service</span>
+              </div>
             </div>
-            <span className="text-sm font-semibold tracking-wider uppercase hidden sm:block">
-              National Library Services
-            </span>
           </div>
           <div className={`flex items-center gap-2 sm:gap-6 text-[10px] sm:text-xs font-medium uppercase tracking-widest ${isDark ? 'text-zinc-400' : 'text-slate-500'}`}>
-            <a href="#" className="hover:text-knls-orange transition-colors hidden lg:block">Vtabu E-Library</a>
+            <a href="https://vtabu.knls.ac.ke" target="_blank" rel="noopener noreferrer" className="hover:text-knls-orange transition-colors hidden lg:block">Vtabu E-Library</a>
             <a href="#showcase" className={`hidden md:block ${isDark ? 'text-white border-white' : 'text-knls-blue border-knls-blue'} border-b pb-1 hover:text-knls-orange transition-colors`}>2026 Showcase</a>
             
             <div className="flex items-center gap-1 ml-4 border-l pl-4 border-black/10 dark:border-white/10">
@@ -41,13 +65,10 @@ export default function Nav({ isDark, toggleTheme, isMotionPaused, toggleMotionP
                 <Search size={16} />
                 <span className="hidden sm:block opacity-50"><kbd className="font-sans px-1 rounded shadow-sm bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10">⌘K</kbd></span>
               </button>
-              <button onClick={toggleAudio} className={`p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer ${isAudioPlaying ? (isDark ? 'text-[#D4AF37]' : 'text-knls-orange') : ''}`} title={isAudioPlaying ? "Mute Ambient Sound" : "Play Ambient Sound"}>
-                {isAudioPlaying ? <Volume2 size={16} /> : <VolumeX size={16} />}
-              </button>
               <button onClick={toggleCinematicMode} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer" title="Gallery Mode">
                 <Expand size={16} />
               </button>
-              <button onClick={toggleMotionPause} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer" title={isMotionPaused ? "Play Animations" : "Pause Animations"}>
+              <button onClick={toggleMotionPause} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer" title={isMotionPaused ? "Enable Animations" : "Disable Animations"}>
                 {isMotionPaused ? <Play size={16} /> : <Pause size={16} />}
               </button>
               <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer">

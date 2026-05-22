@@ -203,6 +203,7 @@ export default function Showcase({ onBookClick, activeBookId, isDark, isMotionPa
                 onClick={() => onBookClick(book)}
                 isActive={activeBookId === book.uniqueId}
                 isDark={isDark}
+                isMotionPaused={isMotionPaused}
               />
             </div>
           ))}

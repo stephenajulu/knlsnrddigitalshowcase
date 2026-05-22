@@ -52,7 +52,7 @@ export default function CustomCursor({ isDark }: { isDark: boolean }) {
 
   return (
      <motion.div 
-      className={`fixed top-0 left-0 rounded-full pointer-events-none z-[100] flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 mix-blend-difference hidden md:flex ${isDark ? 'bg-white' : 'bg-knls-orange'}`}
+      className={`fixed top-0 left-0 rounded-full pointer-events-none z-[9999] flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 ${isDark ? 'bg-white border border-black text-black' : 'bg-knls-orange border border-white text-white'} shadow-[0_0_10px_rgba(0,0,0,0.2)] hidden md:flex`}
       style={{
         width: cursorText ? 48 : 12,
         height: cursorText ? 48 : 12,
@@ -62,7 +62,7 @@ export default function CustomCursor({ isDark }: { isDark: boolean }) {
       }}
      >
        {cursorText && (
-         <span className="text-[10px] font-bold text-black tracking-widest uppercase">{cursorText}</span>
+         <span className="text-[10px] font-bold tracking-widest uppercase">{cursorText}</span>
        )}
      </motion.div>
   )

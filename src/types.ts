@@ -9,6 +9,7 @@ export interface Book {
   monthShort: string;
   description: string;
   coverGradient: string;
+  coverImage?: string;
   genre: string;
   excerpt?: string[];
 }

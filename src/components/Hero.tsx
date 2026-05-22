@@ -1,6 +1,7 @@
 import { motion, useScroll, useTransform } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
 import { useRef } from 'react';
+import { heroContent } from '../data';
 
 export default function Hero({ isDark }: { isDark: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -22,22 +23,22 @@ export default function Hero({ isDark }: { isDark: boolean }) {
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
         className={`text-xs font-bold tracking-[0.5em] uppercase mb-6 ${isDark ? 'text-knls-orange' : 'text-knls-orange'}`}
       >
-        National Reading Day 2026
+        {heroContent.badge}
       </motion.h2>
       
       <motion.h1 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
         className={`text-5xl md:text-7xl font-light tracking-tight leading-tight mb-8 max-w-4xl transition-colors duration-500 ${isDark ? 'text-white' : 'text-knls-blue'}`}
       >
-        Our Stories, Our Future:<br/>
-        <span className={`italic font-serif ${isDark ? 'text-white/90' : 'text-knls-blue/80'}`}>Empowering Minds Through Reading</span>
+        {heroContent.titleLine1}<br/>
+        <span className={`italic font-serif ${isDark ? 'text-white/90' : 'text-knls-blue/80'}`}>{heroContent.titleLine2}</span>
       </motion.h1>
       
       <motion.p 
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.4 }}
         className={`max-w-2xl text-sm md:text-base leading-relaxed ${isDark ? 'text-zinc-400' : 'text-slate-600'}`}
       >
-        A curated digital archive of Kenya's preserved literary heritage. Explore the newest works received through legal deposit during the first seven months of 2026. Scroll down to enter the chronological timeline.
+        {heroContent.description}
       </motion.p>
       
       <motion.div 

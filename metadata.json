@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "knls Vtabu 2026 Showcase",
+  "description": "A cinematic, immersive showcase of 2026 African literature curated by the Kenya National Library Services.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
