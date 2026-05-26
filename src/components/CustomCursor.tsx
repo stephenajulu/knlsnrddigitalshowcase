@@ -51,6 +51,17 @@ export default function CustomCursor({ isDark }: { isDark: boolean }) {
   if (window.matchMedia("(pointer: coarse)").matches) return null;
 
   return (
+    <>
+     <motion.div 
+      className="fixed top-0 left-0 rounded-full pointer-events-none z-[9998] transform -translate-x-1/2 -translate-y-1/2 bg-white blur-[60px] mix-blend-overlay hidden md:block transition-opacity duration-500"
+      style={{
+        width: 400,
+        height: 400,
+        x: cursorXSpring,
+        y: cursorYSpring,
+        opacity: isVisible && cursorText === 'VIEW' ? (isDark ? 0.15 : 0.3) : 0,
+      }}
+     />
      <motion.div 
       className={`fixed top-0 left-0 rounded-full pointer-events-none z-[9999] flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 ${isDark ? 'bg-white border border-black text-black' : 'bg-knls-orange border border-white text-white'} shadow-[0_0_10px_rgba(0,0,0,0.2)] hidden md:flex`}
       style={{
@@ -65,5 +76,6 @@ export default function CustomCursor({ isDark }: { isDark: boolean }) {
          <span className="text-[10px] font-bold tracking-widest uppercase">{cursorText}</span>
        )}
      </motion.div>
+    </>
   )
 }

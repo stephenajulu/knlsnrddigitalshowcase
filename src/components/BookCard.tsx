@@ -1,5 +1,5 @@
 import { useRef, MouseEvent } from 'react';
-import { motion, useAnimationFrame, useMotionValue, useSpring, useTransform } from 'motion/react';
+import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
 import { DisplayBook } from '../types';
 
 interface Props {
@@ -12,75 +12,21 @@ interface Props {
   isActive: boolean;
   isDark: boolean;
   isMotionPaused?: boolean;
+  isShelfView?: boolean;
 }
 
-export default function BookCard({ book, isHovered, isOthersHovered, onHover, onLeave, onClick, isActive, isDark, isMotionPaused }: Props) {
+export default function BookCard({ book, isHovered, isOthersHovered, onHover, onLeave, onClick, isActive, isDark, isMotionPaused, isShelfView }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const stateRef = useRef({ isHovered, isOthersHovered, isActive, isMotionPaused });
-  stateRef.current = { isHovered, isOthersHovered, isActive, isMotionPaused };
-
-  // Core properties for 3D Bay Window and Flex expansion
-  const rotateY = useMotionValue(0);
-  const scale = useMotionValue(0.85);
-  const translateZ = useMotionValue(0);
-  const dimOpacity = useMotionValue(0.4);
-  const width = useMotionValue(240);
-
-  // Apply silky smooth physics
-  const smoothRotateY = useSpring(rotateY, { damping: 40, stiffness: 60 });
-  const smoothScale = useSpring(scale, { damping: 40, stiffness: 60 });
-  const smoothTranslateZ = useSpring(translateZ, { damping: 40, stiffness: 60 });
-  const smoothDimOpacity = useSpring(dimOpacity, { damping: 40, stiffness: 60 });
-  const smoothWidth = useSpring(width, { damping: 40, stiffness: 50 });
 
   // Mouse tilt properties - reduced sensitivity
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
   
-  const tiltX = useSpring(useTransform(mouseY, [0, 1], [15, -15]), { damping: 50, stiffness: 80 });
-  const tiltY = useSpring(useTransform(mouseX, [0, 1], [-20, 20]), { damping: 50, stiffness: 80 });
-
-  useAnimationFrame(() => {
-    if (!containerRef.current) return;
-    const { isHovered, isOthersHovered, isActive, isMotionPaused } = stateRef.current;
-    
-    // Calculate global positioning to skew and scale
-    const rect = containerRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const screenCenterX = window.innerWidth / 2;
-    const dist = centerX - screenCenterX;
-    
-    const maxDist = window.innerWidth * 0.7; // Tweak for curve intensity
-    const normalizedDist = Math.max(-1, Math.min(1, dist / maxDist));
-    
-    // Rotate bounds from roughly +50 to -50 degrees
-    rotateY.set(isMotionPaused ? 0 : normalizedDist * -50); 
-    
-    const absDist = Math.abs(normalizedDist);
-    scale.set(isMotionPaused ? 0.9 : 1.15 - (absDist * 0.3));
-    translateZ.set(isMotionPaused ? 0 : 100 - (absDist * 150));
-
-    // Handle flex expanding dynamically
-    let currentTargetWidth = 240;
-    if (window.innerWidth < 768) currentTargetWidth = 180; // Smaller on mobile
-    if (isHovered) currentTargetWidth = window.innerWidth < 768 ? 220 : 340;
-    else if (isOthersHovered) currentTargetWidth = window.innerWidth < 768 ? 140 : 200;
-    width.set(currentTargetWidth);
-
-    if (isMotionPaused) {
-      mouseX.set(0.5);
-      mouseY.set(0.5);
-    }
-
-    // Handle seamless dimming without conflicting with `isActive` invisibility
-    let targetDim = isMotionPaused ? 0 : (absDist * 0.5);
-    if (isActive) targetDim = 1;
-    else if (isOthersHovered) targetDim += 0.4;
-    dimOpacity.set(targetDim);
-  });
+  const tiltX = useSpring(useTransform(mouseY, [0, 1], [10, -10]), { damping: 50, stiffness: 80 });
+  const tiltY = useSpring(useTransform(mouseX, [0, 1], [-15, 15]), { damping: 50, stiffness: 80 });
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (stateRef.current.isMotionPaused) return;
+    if (isMotionPaused || isShelfView) return;
     const rect = e.currentTarget.getBoundingClientRect();
     mouseX.set((e.clientX - rect.left) / rect.width);
     mouseY.set((e.clientY - rect.top) / rect.height);
@@ -92,47 +38,57 @@ export default function BookCard({ book, isHovered, isOthersHovered, onHover, on
     onLeave();
   };
 
+  // Compute declarative styling classes/states instead of per-frame physics
+  let cardWidth = isShelfView ? 'w-[160px] md:w-[220px]' : (isHovered ? 'w-[220px] md:w-[380px]' : (isOthersHovered ? 'w-[140px] md:w-[200px]' : 'w-[200px] md:w-[280px]'));
+  
   return (
-    <div className="flex items-center gap-6" ref={containerRef}>
+    <div className={`flex items-center gap-6`} ref={containerRef}>
       <span 
-        className={`writing-vertical transform rotate-180 text-[10px] font-bold tracking-[0.3em] font-sans opacity-30 whitespace-nowrap transition-opacity duration-300 ${isDark ? 'text-white' : 'text-knls-blue'}`}
-        style={{ opacity: isActive ? 0 : undefined }}
+        className={`writing-vertical transform rotate-180 text-[10px] font-bold tracking-[0.3em] font-sans whitespace-nowrap transition-opacity duration-300 ${isDark ? 'text-white' : 'text-knls-blue'} ${isActive ? 'opacity-0' : 'opacity-30'}`}
       >
         {book.month}
       </span>
       <motion.div
-        style={{ 
-          rotateY: smoothRotateY, 
-          scale: smoothScale, 
-          z: smoothTranslateZ, 
-          width: smoothWidth,
-          opacity: isActive ? 0 : 1
+        animate={{
+          scale: isActive ? 0.9 : (isHovered ? 1.05 : (isOthersHovered ? 0.95 : 1)),
+          rotateY: isShelfView ? 0 : (isHovered ? 0 : 5),
+          z: isShelfView ? 0 : (isHovered ? 20 : 0)
         }}
-        className="perspective-[1500px] transform-style-3d cursor-pointer flex-shrink-0 h-[320px] md:h-[400px]"
+        transition={{ type: "spring", damping: 30, stiffness: 70 }}
+        className={`perspective-[1500px] transform-style-3d cursor-pointer flex-shrink-0 h-[300px] md:h-[480px] transition-[width] duration-700 ease-out ${cardWidth} ${isActive ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         onMouseEnter={onHover}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={onClick}
+        role="button"
+        tabIndex={0}
+        aria-label={`View details for ${book.title} by ${book.author}`}
+        aria-describedby={`book-desc-${book.uniqueId}`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+          }
+        }}
       >
          {/* Mouse Tilt Wrapper */}
          <motion.div 
-           style={{ rotateX: isHovered ? tiltX : 0, rotateY: isHovered ? tiltY : 0, transformStyle: 'preserve-3d' }}
-           className="w-full h-full transition-transform duration-200"
+           style={{ rotateX: !isMotionPaused && !isShelfView ? tiltX : 0, rotateY: !isMotionPaused && !isShelfView ? tiltY : 0, transformStyle: 'preserve-3d' }}
+           className="w-full h-full"
          >
             {/* The layout morphing container for GSAP-like Flip */}
             <motion.div 
-              layoutId={`book-container-${book.uniqueId}`}
               className={`w-full h-full rounded-r-xl rounded-l-sm flex flex-col justify-end p-6 relative overflow-visible group shadow-2xl ${
                 isDark 
                   ? 'bg-zinc-900/60 backdrop-blur-xl shadow-[0_0_40px_rgba(255,255,255,0.05)]' 
-                  : 'bg-white/80 backdrop-blur-xl shadow-[0_0_40px_rgba(45,44,142,0.15)]'
+                  : 'bg-white/90 backdrop-blur-xl shadow-[0_0_40px_rgba(45,44,142,0.15)]'
               }`}
               style={{ transformStyle: 'preserve-3d' }}
             >
               {/* Dimming Overlay Layer */}
-              <motion.div 
-                className="absolute inset-0 rounded-r-xl rounded-l-sm bg-black pointer-events-none z-50 transition-opacity"
-                style={{ opacity: smoothDimOpacity, transform: 'translateZ(5px)' }}
+              <div 
+                className={`absolute inset-0 rounded-r-xl rounded-l-sm bg-black pointer-events-none z-50 transition-opacity duration-500`}
+                style={{ opacity: (isOthersHovered && !isShelfView) ? 0.6 : 0, transform: 'translateZ(5px)' }}
               />
 
               {/* Spine */}
@@ -183,7 +139,7 @@ export default function BookCard({ book, isHovered, isOthersHovered, onHover, on
               {/* Front Cover Base */}
               <motion.div 
                 layoutId={`book-cover-${book.uniqueId}`}
-                className={`absolute inset-0 bg-gradient-to-br ${book.coverGradient} z-0 opacity-80 group-hover:opacity-100 transition-opacity duration-500 rounded-r-xl rounded-l-sm border-l-4 border-white/10 overflow-hidden`}
+                className={`absolute inset-0 bg-gradient-to-br ${book.coverGradient} z-0 opacity-90 group-hover:opacity-100 transition-opacity duration-500 rounded-r-xl rounded-l-sm border-l-4 border-white/10 overflow-hidden`}
                 style={{ transform: 'translateZ(1px)' }}
               >
                 {book.coverImage && (
@@ -193,12 +149,12 @@ export default function BookCard({ book, isHovered, isOthersHovered, onHover, on
               
               <div className={`absolute inset-0 bg-gradient-to-t z-10 rounded-r-xl rounded-l-sm ${isDark ? 'from-black/95 via-black/40' : 'from-slate-900/95 via-slate-900/30'} to-transparent`} style={{ transform: 'translateZ(2px)' }} />
 
-              <div className="relative z-20 layout-content transform md:translate-y-4 md:group-hover:translate-y-0 transition-transform duration-500 delay-75" style={{ transform: 'translateZ(3px)' }}>
+              <div id={`book-desc-${book.uniqueId}`} className={`relative z-20 layout-content transition-transform duration-500 delay-75`} style={{ transform: `translateZ(3px) translateY(${isHovered || isShelfView ? '0px' : '8px'})` }}>
                  <div className="w-10 h-[2px] bg-white/40 mb-4" />
                  <h3 className="text-lg md:text-xl font-bold uppercase tracking-wider text-white mb-1 line-clamp-2 leading-tight drop-shadow-md">
                     {book.title}
                  </h3>
-                 <p className="text-xs md:text-sm text-zinc-300 italic font-serif opacity-80 group-hover:opacity-100 transition-opacity drop-shadow">
+                 <p className="text-xs md:text-sm text-zinc-300 italic font-serif transition-opacity drop-shadow opacity-90">
                     {book.author}
                  </p>
               </div>

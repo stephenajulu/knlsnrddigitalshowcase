@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, MotionConfig } from 'motion/react';
+import Lenis from 'lenis';
 import { books } from './data';
 import Nav from './components/Nav';
 import Hero from './components/Hero';
@@ -13,18 +14,60 @@ import Showcase from './components/Showcase';
 import BookModal from './components/BookModal';
 import CustomCursor from './components/CustomCursor';
 import CommandPalette from './components/CommandPalette';
+import Preloader from './components/Preloader';
 import { DisplayBook } from './types';
 import { Expand } from 'lucide-react';
+import { useGyroscope } from './hooks/useGyroscope';
 
 export default function App() {
   const systemReducedMotion = useReducedMotion();
   const [activeBook, setActiveBook] = useState<DisplayBook | null>(null);
+  const [hoveredBook, setHoveredBook] = useState<DisplayBook | null>(null);
   const [isDark, setIsDark] = useState(false);
-  const [userMotionPaused, setUserMotionPaused] = useState<boolean | null>(null);
+  const [userMotionPaused, setUserMotionPaused] = useState<boolean>(false);
   const [isCinematicMode, setIsCinematicMode] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  
+  const { gamma, beta } = useGyroscope();
 
-  const isMotionPaused = userMotionPaused ?? systemReducedMotion ?? false;
+  const isMotionPaused = userMotionPaused;
+
+  useEffect(() => {
+    if (isMotionPaused || !isLoaded) return;
+    const lenis = new Lenis({
+      duration: 1.5,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 0.8,
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    const rafId = requestAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      lenis.destroy();
+    };
+  }, [isMotionPaused]);
+
+  const handleToggleCinematicMode = () => {
+    setIsCinematicMode((prev) => {
+      const next = !prev;
+      if (next) {
+        setTimeout(() => {
+          document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' });
+        }, 50);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -43,7 +86,12 @@ export default function App() {
   }, [isCinematicMode, activeBook, isCommandPaletteOpen]);
 
   return (
-    <div className={`transition-colors duration-500 font-sans min-h-screen relative overflow-hidden ${isDark ? 'text-white selection:bg-knls-orange/30 selection:text-white' : 'text-slate-900 selection:bg-knls-blue/30 selection:text-white'}`}>
+    <MotionConfig reducedMotion={isMotionPaused ? "always" : "never"}>
+      <div className={`transition-colors duration-500 font-sans min-h-screen relative overflow-hidden ${isDark ? 'text-white selection:bg-knls-orange/30 selection:text-white' : 'text-slate-900 selection:bg-knls-blue/30 selection:text-white'}`}>
+      
+      <AnimatePresence>
+        {!isLoaded && <Preloader isDark={isDark} onComplete={() => setIsLoaded(true)} />}
+      </AnimatePresence>
       
       <CustomCursor isDark={isDark} />
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} onSelect={setActiveBook} isDark={isDark} />
@@ -69,6 +117,20 @@ export default function App() {
       {/* Base Background */}
       <div className={`fixed inset-0 pointer-events-none z-[-2] transition-colors duration-500 ${isDark ? 'bg-[#050505]' : 'bg-slate-50'}`} />
       
+      {/* Dynamic Adaptive Glow based on active or hovered book */}
+      <motion.div 
+        animate={{ opacity: (activeBook || (isCinematicMode && hoveredBook)) ? (isDark ? 0.3 : 0.4) : 0 }}
+        className={`fixed inset-0 pointer-events-none z-[-1] transition-opacity duration-1000 bg-gradient-to-br ${(activeBook?.coverGradient || hoveredBook?.coverGradient || 'from-transparent to-transparent')} blur-[120px] mix-blend-screen opacity-0`}
+      />
+
+      {/* Vignette Overlay tied to gyroscope (Simulating breathing depth) */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-[99] transition-transform duration-75 ease-out mix-blend-multiply dark:mix-blend-overlay"
+        style={{
+          background: `radial-gradient(circle at ${50 + (gamma || 0) * 0.1}% ${50 + (beta || 0) * 0.1}%, transparent 50%, rgba(0,0,0,${isDark ? 0.8 : 0.3}) 120%)`,
+        }}
+      />
+      
       {/* Frosted Glass + Sun Layout */}
       <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
         {/* The "Sun" */}
@@ -88,13 +150,14 @@ export default function App() {
           isMotionPaused={isMotionPaused} 
           toggleMotionPause={() => setUserMotionPaused(isMotionPaused ? false : true)}
           isCinematicMode={isCinematicMode}
-          toggleCinematicMode={() => setIsCinematicMode(!isCinematicMode)}
+          toggleCinematicMode={handleToggleCinematicMode}
           openCommandPalette={() => setIsCommandPaletteOpen(true)}
         />
         <Hero isDark={isDark} />
         <FeaturedAuthor onBookClick={setActiveBook} isDark={isDark} />
         <Showcase 
           onBookClick={setActiveBook} 
+          onHoverBook={setHoveredBook}
           activeBookId={activeBook?.uniqueId} 
           isDark={isDark} 
           isMotionPaused={isMotionPaused} 
@@ -108,5 +171,6 @@ export default function App() {
         </AnimatePresence>
       </LayoutGroup>
     </div>
+    </MotionConfig>
   );
 }

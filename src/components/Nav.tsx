@@ -61,18 +61,30 @@ export default function Nav({ isDark, toggleTheme, isMotionPaused, toggleMotionP
             <a href="#showcase" className={`hidden md:block ${isDark ? 'text-white border-white' : 'text-knls-blue border-knls-blue'} border-b pb-1 hover:text-knls-orange transition-colors`}>2026 Showcase</a>
             
             <div className="flex items-center gap-1 ml-4 border-l pl-4 border-black/10 dark:border-white/10">
-              <button onClick={openCommandPalette} className={`flex items-center gap-2 p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer mr-2`} title="Search (Cmd+K)">
+              <button onClick={openCommandPalette} className={`group relative flex items-center gap-2 p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer mr-2`} aria-label="Search" aria-describedby="search-desc">
                 <Search size={16} />
                 <span className="hidden sm:block opacity-50"><kbd className="font-sans px-1 rounded shadow-sm bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10">⌘K</kbd></span>
+                <span id="search-desc" className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-black text-white dark:bg-white dark:text-black px-2.5 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg">
+                  Search
+                </span>
               </button>
-              <button onClick={toggleCinematicMode} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer" title="Gallery Mode">
+              <button onClick={toggleCinematicMode} className="group relative p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer" aria-label="Gallery Mode" aria-describedby="gallery-desc">
                 <Expand size={16} />
+                <span id="gallery-desc" className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-black text-white dark:bg-white dark:text-black px-2.5 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg">
+                  Gallery Mode
+                </span>
               </button>
-              <button onClick={toggleMotionPause} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer" title={isMotionPaused ? "Enable Animations" : "Disable Animations"}>
+              <button onClick={toggleMotionPause} className="group relative p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer" aria-label="Toggle Animations" aria-describedby="animations-desc">
                 {isMotionPaused ? <Play size={16} /> : <Pause size={16} />}
+                <span id="animations-desc" className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-black text-white dark:bg-white dark:text-black px-2.5 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg">
+                  {isMotionPaused ? "Enable Animations" : "Disable Animations"}
+                </span>
               </button>
-              <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer">
+              <button onClick={toggleTheme} className="group relative p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer" aria-label="Toggle Theme" aria-describedby="theme-desc">
                 {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                <span id="theme-desc" className="absolute -bottom-10 right-0 md:left-1/2 md:-translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-black text-white dark:bg-white dark:text-black px-2.5 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg">
+                  {isDark ? "Light Mode" : "Dark Mode"}
+                </span>
               </button>
             </div>
           </div>

@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { DisplayBook } from '../types';
 import { X, Volume2, Square, ChevronDown, ChevronUp, Share2, BookOpen, Twitter, MessageCircle } from 'lucide-react';
 import ExcerptReader from './ExcerptReader';
+import GenreIcon from './GenreIcon';
+import { useAudioUI } from '../hooks/useAudioUI';
 
 interface Props {
   book: DisplayBook;
@@ -16,14 +18,20 @@ export default function BookModal({ book, onClose, isDark }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAuthorHovered, setIsAuthorHovered] = useState(false);
   const [isExcerptOpen, setIsExcerptOpen] = useState(false);
+  const { playPaperRustle } = useAudioUI();
+
+  const handleClose = () => {
+    playPaperRustle();
+    onClose();
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isExcerptOpen) onClose();
+      if (e.key === 'Escape' && !isExcerptOpen) handleClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, isExcerptOpen]);
+  }, [handleClose, isExcerptOpen]);
 
   useEffect(() => {
     // Cleanup speech when modal closes
@@ -63,20 +71,31 @@ export default function BookModal({ book, onClose, isDark }: Props) {
     ? book.description 
     : book.description.substring(0, 180) + "...";
 
+  // Calculate if mobile for responsive variants
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   // Stagger animation container
   const containerVariants = {
     hidden: { 
       opacity: 0,
-      rotateY: -90,
-      transformOrigin: "left center",
-      transformPerspective: 2000
+      rotateY: isMobile ? 0 : -100,
+      rotateX: isMobile ? -60 : 0,
+      transformOrigin: isMobile ? "top center" : "left center",
+      transformPerspective: 2500,
+      x: isMobile ? 0 : -50,
+      y: isMobile ? -40 : 0,
+      z: -50
     },
     visible: { 
       opacity: 1,
       rotateY: 0,
+      rotateX: 0,
+      x: 0,
+      y: 0,
+      z: 0,
       transition: { 
-        duration: 1.2, 
-        ease: [0.22, 1, 0.36, 1],
+        duration: 1.4, 
+        ease: [0.34, 1.36, 0.64, 1], // slight spring-like bounce
         staggerChildren: 0.1, 
         delayChildren: 0.4 
       } 
@@ -84,7 +103,7 @@ export default function BookModal({ book, onClose, isDark }: Props) {
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20, rotateX: 20 },
+    hidden: { opacity: 0, y: isMobile ? 10 : 20, rotateX: 20 },
     visible: { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.6, ease: "easeOut" } }
   };
 
@@ -105,13 +124,13 @@ export default function BookModal({ book, onClose, isDark }: Props) {
       />
 
       <button 
-        onClick={onClose}
+        onClick={handleClose}
         className={`absolute top-6 right-6 md:top-10 md:right-10 w-12 h-12 rounded-full border flex items-center justify-center transition-all z-50 focus:outline-none ${isDark ? 'border-white/20 text-white/50 hover:text-white hover:border-white/50 hover:bg-white/5' : 'border-black/20 text-black/50 hover:text-black hover:border-black/50 hover:bg-black/5'}`}
       >
         <X size={24} />
       </button>
 
-      <div className="w-full max-w-7xl h-full max-h-[85vh] flex flex-col md:flex-row items-center justify-center gap-10 md:gap-20 relative z-10 overflow-y-auto overflow-x-hidden p-4 no-scrollbar">
+      <div className="w-full max-w-7xl h-full max-h-[95vh] md:max-h-[85vh] flex flex-col md:flex-row md:items-center justify-start md:justify-center gap-8 md:gap-20 relative z-10 overflow-y-auto overflow-x-hidden p-4 pt-16 md:pt-4 no-scrollbar">
         
         {/* Left Side: The Book Cover Morph */}
         <div className="w-full md:w-1/2 flex items-center justify-center md:justify-end perspective-[2000px] shrink-0">
@@ -156,7 +175,7 @@ export default function BookModal({ book, onClose, isDark }: Props) {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          exit={{ opacity: 0, rotateY: -60, transformPerspective: 2000, transformOrigin: 'left center', transition: { duration: 0.6, ease: [0.6, 0.05, -0.01, 0.9] } }}
+          exit={{ opacity: 0, rotateY: isMobile ? 0 : -60, rotateX: isMobile ? -45 : 0, y: isMobile ? -20 : 0, transformPerspective: 2000, transformOrigin: isMobile ? 'top center' : 'left center', transition: { duration: 0.5, ease: [0.6, 0.05, -0.01, 0.9] } }}
           style={{ transformStyle: 'preserve-3d' }}
           className="w-full md:w-1/2 flex flex-col justify-center text-left"
         >
@@ -194,6 +213,11 @@ export default function BookModal({ book, onClose, isDark }: Props) {
                  )}
                </AnimatePresence>
              </div>
+             <span className={`hidden md:block w-1.5 h-1.5 rounded-full ${isDark ? 'bg-zinc-600' : 'bg-slate-300'}`}></span>
+             <p className={`text-xs md:text-sm tracking-widest uppercase font-bold flex items-center gap-1.5 ${isDark ? 'text-zinc-400' : 'text-slate-500'}`}>
+                <GenreIcon genre={book.genre} size={14} className="opacity-80" />
+                {book.genre}
+             </p>
              <span className={`hidden md:block w-1.5 h-1.5 rounded-full ${isDark ? 'bg-zinc-600' : 'bg-slate-300'}`}></span>
              <p className={`text-xs md:text-sm tracking-widest uppercase font-bold ${isDark ? 'text-zinc-400' : 'text-slate-500'}`}>
                 Received: {book.month} 2026

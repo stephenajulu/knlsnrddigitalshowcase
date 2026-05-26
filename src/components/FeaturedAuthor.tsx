@@ -17,12 +17,14 @@ export default function FeaturedAuthor({ onBookClick, isDark }: Props) {
   });
 
   const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
-  const y = useTransform(scrollYProgress, [0, 0.2], [50, 0]);
+  const y = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], ["20vh", "0vh", "0vh", "-20vh"]);
+  const scale = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0.9, 1, 1, 0.9]);
+  const filter = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
 
   return (
     <motion.section 
       ref={containerRef}
-      style={{ opacity, y }}
+      style={{ opacity, y, scale, filter }}
       className="py-32 px-6 md:px-24 relative z-20 flex flex-col items-center justify-center min-h-[70vh]"
     >
       <div className="w-full max-w-5xl">
